@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+DOCKER_IMAGE="thumbsupgallery/thumbsup"
+
+# Build the image
+
+docker build -f Dockerfile.release -t "${DOCKER_IMAGE}:latest" .
+
+# Push it when running on Travis CI
+# This pushes both <thumbsup:x.y.z> and <thumbsup:latest>
+
+if [ -n "${TRAVIS}" ]; then
+  PACKAGE_VERSION="${TRAVIS_TAG//v}"
+  docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+  docker tag "${DOCKER_IMAGE}:latest" "${DOCKER_IMAGE}:${PACKAGE_VERSION}"
+  docker push "${DOCKER_IMAGE}:${PACKAGE_VERSION}"
+  docker push "${DOCKER_IMAGE}:latest"
+else
+  echo "Skipping: docker push"
+  echo "Images are only pushed on Travis CI"
+  exit 1
+fi
